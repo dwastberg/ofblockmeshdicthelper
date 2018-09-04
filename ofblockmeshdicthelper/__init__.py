@@ -354,27 +354,24 @@ class BlockMeshDict(object):
 
     def remove_internal_boundaries(self, boundary):
         """
-        :param boundary: either an instance of a Boundary object or the name of a boundary
+        :param boundary: the name of a boundary
 
         remove all boundaries where two faces share all the vertices
         """
 
-        #test for string in both python 2 and 3
-        try:
-            basestring
-        except NameError:
-            basestring = str
-        if isinstance(boundary,basestring):
-            boundary_faces = self.boundaries[boundary].faces
-        else:
-            boundary_faces = boundary.faces
-
+        boundary_faces = self.boundaries[boundary].faces
         face_vertices = []
 
+        print(f'sorting {len(boundary_faces)} faces')
         for face in boundary_faces:
+            #sort vertices so we can compare faces. Faces with the same vertices in different order
+            #are considered indentical
             face_vertices.append(tuple(sorted([self.vertices[vn].index for vn in face.vnames])))
+        print('finding duplicates')
         duplicated_patches = [key for key,value in Counter(face_vertices).items() if value>1]
+        print('finding duplicate index')
         duplicated_patch_index = [idx for idx,patch in enumerate(face_vertices) if patch in duplicated_patches]
+        print('deleting boundaries')
         for idx in sorted(duplicated_patch_index, reverse=True):
             del self.boundaries[boundary].faces[idx]
 
