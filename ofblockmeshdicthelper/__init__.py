@@ -368,7 +368,7 @@ class BlockMeshDict(object):
             #are considered indentical
             face_vertices.append(tuple(sorted([self.vertices[vn].index for vn in face.vnames])))
         print('finding duplicates')
-        duplicated_patches = [key for key,value in Counter(face_vertices).items() if value>1]
+        duplicated_patches = {key for key,value in Counter(face_vertices).items() if value>1}
         print('finding duplicate index')
         duplicated_patch_index = [idx for idx,patch in enumerate(face_vertices) if patch in duplicated_patches]
         print('deleting boundaries')
