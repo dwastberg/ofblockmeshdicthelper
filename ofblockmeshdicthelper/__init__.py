@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function
 from six import string_types
 
 import io
-from collections import Iterable
+from collections import Iterable,Counter
 from string import Template
 from itertools import groupby
 
@@ -321,7 +321,6 @@ class BlockMeshDict(object):
 
     def merge_vertices(self):
         """call reduce_vertex on all vertices with identical values."""
-
         # groupby expects sorted data
         sorted_vertices = sorted(list(self.vertices.items()), key=lambda v: hash(v[1]))
         groups = []
@@ -352,6 +351,33 @@ class BlockMeshDict(object):
         b = Boundary(type_, name, faces)
         self.boundaries[name] = b
         return b
+
+    def remove_internal_boundaries(self, boundary):
+        """
+        :param boundary: either an instance of a Boundary object or the name of a boundary
+
+        remove all boundaries where two faces share all the vertices
+        """
+
+        #test for string in both python 2 and 3
+        try:
+            basestring
+        except NameError:
+            basestring = str
+        if isinstance(boundary,basestring):
+            boundary_faces = self.boundaries[boundary].faces
+        else:
+            boundary_faces = boundary.faces
+
+        face_vertices = []
+
+        for face in boundary_faces:
+            face_vertices.append(tuple(sorted([self.vertices[vn].index for vn in face.vnames])))
+        duplicated_patches = [key for key,value in Counter(face_vertices).items() if value>1]
+        duplicated_patch_index = [idx for idx,patch in enumerate(face_vertices) if patch in duplicated_patches]
+        for idx in sorted(duplicated_patch_index, reverse=True):
+            del self.boundaries[boundary].faces[idx]
+
 
     def assign_vertexid(self):
         """1. create list of Vertex which are referred by blocks only.
